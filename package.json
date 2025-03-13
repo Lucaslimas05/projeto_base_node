@@ -1,0 +1,20 @@
+{
+  "name": "server-app-transito",
+  "version": "1.0.0",
+  "description": "server em node.js para app de acidente de transito",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun --watch index.js"
+  },
+  "author": "lucas lima",
+  "license": "ISC",
+  "keywords": [],
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql": "^2.18.1"
+  }
+}
