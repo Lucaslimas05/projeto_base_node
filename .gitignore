@@ -54,3 +54,4 @@ ecosystem.config.js
 .env
 
 *.lock
+package-lock.json
