@@ -1,9 +1,10 @@
 import routesUsuarios from './usuarios'
-import bodyParser from 'body-parser'
+import routesAuth from './auth'
+import antentica from '../middlware/autenticacao'
 
 const routes = app => {
-    app.use(bodyParser.json())
-    //app.use(express.json())
+    app.use(routesAuth)
+    app.use(antentica)
     app.use(routesUsuarios)
 }
 

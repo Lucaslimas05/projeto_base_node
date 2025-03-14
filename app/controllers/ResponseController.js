@@ -1,9 +1,12 @@
 class ResponseController {
-     errorMessage(res, msgError, status = 500){
-       return res.status(status).json({message: msgError || "Erro interno" })
+    errorMessage(res, message = "Erro interno", status = 500){
+       return res.status(status).json({message})
     }
-     errorValidacao(res, validacao, status = 400){
-       return res.status(status).json({message: "Dados inválidos", validacao})
+    errorValidacao(res, validacao, message = "Dados inválidos", status = 400){
+       return res.status(status).json({message, validacao})
+    }
+    resData(res, data, status = 200){
+      return res.status(status).json(data);
     }
 }
 

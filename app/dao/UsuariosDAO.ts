@@ -9,9 +9,9 @@ class UsuariosDAO extends GenericDAO {
         })
     }
 
-    byEmail(nome: string): Promise<any>{
+    byEmail(email: string): Promise<any>{
         return new Promise((res, rej) => {
-            this.query(`select * from usuarios where email = ${mysql.escape(nome)}`).then(res).catch(rej);
+            this.query(`select * from usuarios where email = ?`, [email]).then(res).catch(rej);
         })
     }
 
