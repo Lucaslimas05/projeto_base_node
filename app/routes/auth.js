@@ -5,7 +5,7 @@ import AuthController from "../controllers/AuthController";
 const routes = express.Router();
 
 routes.post("/login",  AuthController.login);
-routes.get("/registrar", UsuariosController.cadastrar);
+routes.post("/registrar", UsuariosController.cadastrar);
 
 
 export default routes;

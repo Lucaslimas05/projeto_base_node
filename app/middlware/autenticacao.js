@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { findOne } from '../utils/format';
 import UsuariosDAO from '../dao/UsuariosDAO';
+import UsuarioRolesDAO from '../dao/UsuarioRolesDAO';
 
 export async function antentica(req, res, next) {
     try {
@@ -9,8 +10,12 @@ export async function antentica(req, res, next) {
         const decoded = jwt.decode(token);
         const usuarioDAO = new UsuariosDAO()
         const usuario = findOne(await usuarioDAO.byEmail(decoded.sub));
+
         if (usuario) {
-            req.user = usuario;
+            const usuarioRolesDAO = new UsuarioRolesDAO()
+            const roles = await usuarioRolesDAO.byUserId(usuario.id);
+            const usuarioAtt = {...usuario, roles}
+            req.user = usuarioAtt;
         }
         next();
     } catch (e) {

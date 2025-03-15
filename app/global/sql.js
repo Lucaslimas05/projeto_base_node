@@ -1,0 +1,1 @@
+export const without_deleted_at = " deleted_at IS NULL"

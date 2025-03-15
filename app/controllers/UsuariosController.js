@@ -1,11 +1,16 @@
 
+import RolesDAO from "../dao/RolesDAO"
+import UsuarioRolesDAO from "../dao/UsuarioRolesDAO"
 import UsuariosDAO from "../dao/UsuariosDAO"
-import { findOne } from "../utils/format"
+import { ROLES } from "../global/constants"
+import { getHashSenha, getToken } from "../utils/autenticacao"
+import { findOne, removeSenha } from "../utils/format"
 import { validaCadastro } from "../validations/usuarios.js/usuarios"
 import ResponseController from "./ResponseController"
-import  bcrypt from "bcrypt"
 
 const usuarioDAO = new UsuariosDAO()
+const rolesDAO = new RolesDAO()
+const usuariosRolesDAO = new UsuarioRolesDAO()
 const response = new ResponseController();
 
 const { errorMessage, errorValidacao, resData } = response
@@ -19,18 +24,34 @@ class UsuariosController {
                return errorValidacao(res, erroValidacao)
             }
 
-            const { senha } = req.body
-            const salt = bcrypt.genSaltSync(10);
-            const senhaHash =  bcrypt.hashSync(senha, salt);
+            const { email, senha, admin, nome } = req.body
+
+            const usuarioEncontrado = findOne(await usuarioDAO.byEmail(email))
+            if(usuarioEncontrado){
+                return  errorMessage(res,  "Já existe usuário com e-mail cadastrado", 400)
+            }
+
+            const senhaHash =  getHashSenha(senha)
             
-            const result = await usuarioDAO.cadastrar({ ...req.body, senha: senhaHash}); 
-            if(!result?.insertId){
+            const usuarioCadastrado = await usuarioDAO.cadastrar({email, nome, senha: senhaHash}); 
+            if(!usuarioCadastrado?.insertId){
                 return errorMessage(res,  "Não foi possível cadastrar usuario", 400)
             }
 
-            const usuario = findOne(await usuarioDAO.byId(result.insertId));
+            let role_id = findOne(await rolesDAO.byNome( admin ?  ROLES.ADMIN : ROLES.USUARIO))?.id;
+            const resultUsuarioRoles = await usuariosRolesDAO.cadastrar({role_id, usuario_id: usuarioCadastrado.insertId});
 
-            return resData(res, usuario, 201)
+            if(!resultUsuarioRoles?.affectedRows){
+                await usuarioDAO.deletar(usuarioCadastrado.insertId);
+                return errorMessage(res,  "Não foi possível cadastrar usuario", 400)
+            }
+
+            const usuario = findOne(await usuarioDAO.byId(usuarioCadastrado.insertId));
+            const roles = await usuariosRolesDAO.byUserId(usuario.id)
+            const accessToken = getToken(usuario.email)
+            const usuarioAtt = removeSenha({...usuario, accessToken, roles});
+            
+            return resData(res, usuarioAtt, 201)
         }catch(e){
             return errorMessage(res, e?.message)
         }
@@ -39,13 +60,24 @@ class UsuariosController {
     static async listar(req, res){
         try{
             const usuarios = await usuarioDAO.listar();
-            resData(res, usuarios)
+            return resData(res, usuarios)
         }catch(e){
             return errorMessage(res, e?.message)
         }
     }    
 
     static async deletar(req, res){
+        try{
+            const {id} = req.params
+            const usuarioDeletado = await usuarioDAO.deletar(id);
+            if(!usuarioDeletado?.affectedRows){
+                return errorMessage(res, "Não foi possível deletar usuário")
+            }
+           return resData(res, {message: "Usuário deletado com sucesso"})
+        }catch(e){
+            return errorMessage(res, e?.message)
+        }
+        
         
     }    
     static async atualizar(req, res){
@@ -53,7 +85,16 @@ class UsuariosController {
     }  
       
     static async byId(req, res){
-        
+        try{
+            const {id} = req.params;
+            const usuario =  findOne(await usuarioDAO.byId(id));
+            const roles = await usuariosRolesDAO.byUserId(usuario.id)
+            const accessToken = getToken(usuario.email)
+            const usuarioAtt = removeSenha({...usuario, accessToken, roles});
+            return resData(res, usuarioAtt)
+        }catch(e){
+            return errorMessage(res, e?.message)
+        }
     }  
 }
 

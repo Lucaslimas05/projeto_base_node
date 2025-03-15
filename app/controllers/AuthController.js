@@ -1,11 +1,13 @@
 import bcrypt from "bcrypt"
-import jwt from 'jsonwebtoken';
 import UsuariosDAO from "../dao/UsuariosDAO"
 import { validaLogin } from "../validations/usuarios.js/usuarios";
 import ResponseController from "./ResponseController";
 import { findOne, removeSenha } from "../utils/format";
+import UsuarioRolesDAO from "../dao/UsuarioRolesDAO";
+import { getToken } from "../utils/autenticacao";
 
 const usuarioDAO = new UsuariosDAO();
+const usuarioRolesDAO = new UsuarioRolesDAO();
 const response = new ResponseController();
 const { errorValidacao, errorMessage, resData } = response
 
@@ -28,10 +30,11 @@ class AuthController {
             if (!success) {
                 return errorMessage(res, "E-mail ou senha inválidos", 401);
             }
-            const token = jwt.sign({ sub: usuario.email, iss: 'peri-crash' }, process.env.API_SECRET, { expiresIn: 60 })
-            usuario.accessToken = token
+            const accessToken = getToken(usuario.email);
+            const roles = await usuarioRolesDAO.byUserId(usuario.id);
+            const usuarioAtt = removeSenha({...usuario, accessToken, roles})
 
-            return resData(res, removeSenha(usuario), 200);
+            return resData(res, usuarioAtt, 200);
 
         } catch (e) {
             return errorMessage(res, "Erro ao efetuar login")

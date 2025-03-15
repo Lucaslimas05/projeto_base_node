@@ -1,17 +1,18 @@
+import { without_deleted_at } from "../global/sql";
+import { getTimestamp } from "../utils/date";
 import { GenericDAO } from "./GenericDAO";
-import mysql from "mysql"
 
 class UsuariosDAO extends GenericDAO {
     
     listar(): Promise<any>{
         return new Promise((res, rej) => {
-            this.query(`select * from usuarios where deleted_at IS NULL`).then(res).catch(rej);
+            this.query(`select * from usuarios where ${without_deleted_at}`).then(res).catch(rej);
         })
     }
 
     byEmail(email: string): Promise<any>{
         return new Promise((res, rej) => {
-            this.query(`select * from usuarios where email = ?`, [email]).then(res).catch(rej);
+            this.query(`select * from usuarios where email = ? and ${without_deleted_at}`, [email]).then(res).catch(rej);
         })
     }
 
@@ -29,8 +30,8 @@ class UsuariosDAO extends GenericDAO {
 
     deletar(id: string): Promise<any>{
         return new Promise((res, rej) => {
-            const timestamp = new Date();
-            this.query(`update usuarios set deleted_at = ${timestamp} where id = ${id}`).then(res).catch(rej);
+            const timestamp = getTimestamp();
+            this.query(`update usuarios set deleted_at = "${timestamp}" where id = ?`, [id]).then(res).catch(rej);
         })
     }
 
