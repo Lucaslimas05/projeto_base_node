@@ -1,10 +1,11 @@
 import bcrypt from "bcrypt"
 import UsuariosDAO from "../dao/UsuariosDAO"
-import { validaLogin } from "../validations/usuarios.js/usuarios";
+import { validaLogin } from "../validations/usuarios";
 import ResponseController from "./ResponseController";
 import { findOne, removeSenha } from "../utils/format";
 import UsuarioRolesDAO from "../dao/UsuarioRolesDAO";
 import { getToken } from "../utils/autenticacao";
+import { registrarErro } from "../utils/logger";
 
 const usuarioDAO = new UsuariosDAO();
 const usuarioRolesDAO = new UsuarioRolesDAO();
@@ -30,6 +31,11 @@ class AuthController {
             if (!success) {
                 return errorMessage(res, "E-mail ou senha inválidos", 401);
             }
+
+            if (!usuario.ativo) {
+                return errorMessage(res, "Usuário inativo", 403);
+            }
+
             const accessToken = getToken(usuario.email);
             const roles = await usuarioRolesDAO.byUserId(usuario.id);
             const usuarioAtt = removeSenha({...usuario, accessToken, roles})
@@ -37,8 +43,8 @@ class AuthController {
             return resData(res, usuarioAtt, 200);
 
         } catch (e) {
+            registrarErro(req, e, 'AuthController.login')
             return errorMessage(res, "Erro ao efetuar login")
-
         }
     }
 }

@@ -1,22 +1,24 @@
 import jwt from 'jsonwebtoken';
-import { findOne } from '../utils/format';
+import { findOne, removeSenha } from '../utils/format';
+import { JWT_ISSUER } from '../utils/autenticacao';
 import UsuariosDAO from '../dao/UsuariosDAO';
 import UsuarioRolesDAO from '../dao/UsuarioRolesDAO';
 
 export async function antentica(req, res, next) {
     try {
         const token = extractToken(req)
-        jwt.verify(token, process.env.API_SECRET);
+        jwt.verify(token, process.env.API_SECRET, { issuer: JWT_ISSUER });
         const decoded = jwt.decode(token);
         const usuarioDAO = new UsuariosDAO()
         const usuario = findOne(await usuarioDAO.byEmail(decoded.sub));
 
-        if (usuario) {
-            const usuarioRolesDAO = new UsuarioRolesDAO()
-            const roles = await usuarioRolesDAO.byUserId(usuario.id);
-            const usuarioAtt = {...usuario, roles}
-            req.user = usuarioAtt;
+        if (!usuario || !usuario.ativo) {
+            return res.status(401).json({ message: "Não autorizado" })
         }
+
+        const usuarioRolesDAO = new UsuarioRolesDAO()
+        const roles = await usuarioRolesDAO.byUserId(usuario.id);
+        req.user = removeSenha({...usuario, roles});
         next();
     } catch (e) {
         res.status(401).json({ message: "Não autorizado" })

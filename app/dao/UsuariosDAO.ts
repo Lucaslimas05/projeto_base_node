@@ -1,44 +1,34 @@
-import { without_deleted_at } from "../global/sql";
-import { getTimestamp } from "../utils/date";
+import { tables, without_deleted_at } from "../global/sql";
 import { GenericDAO } from "./GenericDAO";
 
+const { tb_usuarios } = tables;
+
 class UsuariosDAO extends GenericDAO {
-    
-    listar(): Promise<any>{
-        return new Promise((res, rej) => {
-            this.query(`select * from usuarios where ${without_deleted_at}`).then(res).catch(rej);
-        })
+
+    listar() {
+        return this.query(`select * from ${tb_usuarios} where ${without_deleted_at}`);
     }
 
-    byEmail(email: string): Promise<any>{
-        return new Promise((res, rej) => {
-            this.query(`select * from usuarios where email = ? and ${without_deleted_at}`, [email]).then(res).catch(rej);
-        })
+    byEmail(email: string) {
+        return this.query(`select * from ${tb_usuarios} where email = $1 and ${without_deleted_at}`, [email]);
     }
 
-    byId(id: string): Promise<any>{
-        return new Promise((res, rej) => {
-            this.query(`select * from usuarios where id = ${id}`).then(res).catch(rej);
-        })
+    byId(id: string | number) {
+        return this.query(`select * from ${tb_usuarios} where id = $1 and ${without_deleted_at}`, [id]);
     }
 
-    cadastrar(user: any): Promise<any>{
-        return new Promise((res, rej) => {
-            this.query(`insert into usuarios set ?`, user).then(res).catch(rej);
-        })
+    cadastrar(user: Record<string, any>) {
+        const { sql, values } = this.buildInsertQuery(tb_usuarios, user);
+        return this.query(sql, values, true);
     }
 
-    deletar(id: string): Promise<any>{
-        return new Promise((res, rej) => {
-            const timestamp = getTimestamp();
-            this.query(`update usuarios set deleted_at = "${timestamp}" where id = ?`, [id]).then(res).catch(rej);
-        })
+    deletar(id: string | number) {
+        return this.query(`update ${tb_usuarios} set deleted_at = NOW() where id = $1 and ${without_deleted_at}`, [id], true);
     }
 
-    atualizar(usuario): Promise<any>{
-        return new Promise((res, rej) => {
-           // this.query(`update usuarios set nome = ${ mysql.escape(name)} where id = ${id}`).then(res).catch(rej);
-        })
+    atualizar({ id, ...dados }: Record<string, any>) {
+        const { sql, values } = this.buildUpdateQuery(tb_usuarios, { ...dados, updated_at: new Date() }, { id });
+        return this.query(sql, values, true);
     }
 
 }
