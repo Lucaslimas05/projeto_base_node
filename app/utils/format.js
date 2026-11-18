@@ -14,3 +14,24 @@ export function removeSenha(data){
         return data
     }
 }
+
+export function cleanObject(obj, options = {}) {
+    const {
+        removeEmptyStrings = true,
+        treatStringUndefined = true
+    } = options;
+
+    const result = {};
+
+    for (const key in obj) {
+        const value = obj[key];
+
+        if (value === undefined) continue;
+        if (treatStringUndefined && value === "undefined") continue;
+        if (removeEmptyStrings && value === "") continue;
+
+        result[key] = value;
+    }
+
+    return result;
+}

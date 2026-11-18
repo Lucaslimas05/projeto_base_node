@@ -55,3 +55,4 @@ ecosystem.config.js
 
 *.lock
 package-lock.json
+bun.lockb

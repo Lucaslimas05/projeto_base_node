@@ -1,10 +1,11 @@
+import { tables } from "../global/sql";
 import { GenericDAO } from "./GenericDAO";
 
+const { tb_roles } = tables;
+
 class RolesDAO extends GenericDAO {
-    byNome(nome: string): Promise<any>{
-        return new Promise((res, rej) => {
-            this.query(`select * from roles where nome = ?`, [nome]).then(res).catch(rej);
-        })
+    byNome(nome: string) {
+        return this.query(`select * from ${tb_roles} where nome = $1`, [nome]);
     }
 }
 
